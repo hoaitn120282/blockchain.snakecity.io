@@ -90,6 +90,8 @@ contract OpenSnakeEgg is AccessControlEnumerable, ERC721Enumerable, ERC721Burnab
 
         uint8 randomSpiece = uint8(uint256(keccak256(abi.encodePacked(block.timestamp, randNonce))) %4 );
 
+        randNonce++;
+        
         string memory snakeSpiece = getSpiece(randomSpiece);
         
         uint star = getRarity();
@@ -110,4 +112,5 @@ contract OpenSnakeEgg is AccessControlEnumerable, ERC721Enumerable, ERC721Burnab
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlEnumerable, ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
 }
