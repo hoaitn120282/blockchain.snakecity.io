@@ -38,7 +38,9 @@ contract Gems is AccessControlEnumerable, ERC721Enumerable, ERC721Burnable  {
         emit BaseURIChanged(uri);
     }
 
-    function mint(address to, uint256[] memory propTypes, uint256[] memory propValues) public virtual {
+    function mint(uint256 gemPrice, address to, uint256[] memory propTypes, uint256[] memory propValues) public virtual {
+        require(msg.sender.balance >= gemPrice, "Not Enough SNCT");
+        
         require(hasRole(MINTER_ROLE, _msgSender()), "Gems: must have minter role to mint");
 
         _mint(to, ++currentId);
