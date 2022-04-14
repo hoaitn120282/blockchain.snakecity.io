@@ -6,55 +6,52 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
-contract SnakeEgg is AccessControlEnumerable, ERC721Enumerable, ERC721Burnable {
-
-    uint randNonce = 0;
+contract Gems is AccessControlEnumerable, ERC721Enumerable, ERC721Burnable  {
 
     event BaseURIChanged(string uri);
 
-    uint256 public currentId;
+    event GemsCreated(uint256 id, address owner, uint256[] propTypes, uint256[] propValues);
+
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     string private _uri;
 
-    struct Egg {
-        uint256 snakeGender;
-        uint256 snakeRarity;
-    }
+    uint256 public currentId;
 
-    event SnakeEggCreated(uint256 id, address owner, Egg newSnake);
+    mapping(uint256 => uint256) public props;
 
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    
     constructor(string memory name, string memory symbol, string memory uri) ERC721(name, symbol) {
         _uri = uri;
+
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
         _setupRole(MINTER_ROLE, _msgSender());
     }
 
     function setBaseURI(string memory uri) public virtual {
-        require(bytes(uri).length > 0, "SnakeEgg: uri is invalid");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Gems: must have admin role to set");
+
+        require(bytes(uri).length > 0, "Gems: uri is invalid");
 
         _uri = uri;
 
         emit BaseURIChanged(uri);
     }
 
-    function mint(uint256 eggPrice, address to) public virtual payable {
-        require(msg.sender.balance >= eggPrice, "Not Enough SNCT");
-
-        //check limitation of each egg type
+    function mint(address to, uint256[] memory propTypes, uint256[] memory propValues) public virtual {
+        require(hasRole(MINTER_ROLE, _msgSender()), "Gems: must have minter role to mint");
 
         _mint(to, ++currentId);
 
-        uint256 snakeGender = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, randNonce))) % 2 ;
+        uint256 length = propTypes.length;
 
-        uint256 snakeRarity = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, randNonce))) % 5 ;
+        require(length == propValues.length, "Gems: array length is invalid");
 
-        randNonce++;
-        
-        Egg memory newSnake = Egg(snakeGender, snakeRarity);
+        for (uint256 i = 0; i < length; i++) {
+            props[propTypes[i]] = propValues[i];
+        }
 
-        emit SnakeEggCreated(currentId, to, newSnake);
+        emit GemsCreated(currentId, to, propTypes, propValues);
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -68,4 +65,5 @@ contract SnakeEgg is AccessControlEnumerable, ERC721Enumerable, ERC721Burnable {
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlEnumerable, ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
 }
